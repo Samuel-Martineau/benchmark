@@ -1,0 +1,6 @@
+{
+  "databaseURL": "https://Samuel-Martineau-s-workspace-0ttpee.us-east-1.xata.sh/db/benchmark",
+  "codegen": {
+    "output": "src/xata.ts"
+  }
+}
