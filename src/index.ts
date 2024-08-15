@@ -1,19 +1,6 @@
-import { drizzle as drizzleHttp } from "drizzle-orm/xata-http";
-import { drizzle as drizzleTcp } from "drizzle-orm/node-postgres";
 import pg from "pg";
 import { XataClient } from "./xata.js";
 import { faker } from "@faker-js/faker";
-import {
-  PgDatabase,
-  PgQueryResultHKT,
-  pgTable,
-  text,
-} from "drizzle-orm/pg-core";
-
-const myTable = pgTable("my_table", {
-  text: text("text").notNull(),
-  id: text("xata_id").primaryKey().generatedAlwaysAs(null),
-});
 
 function sampleMean(datums: number[]) {
   return datums.reduce((acc, curr) => acc + curr, 0) / datums.length;
@@ -27,15 +14,6 @@ function sampleStandardDeviation(datums: number[]) {
   );
 }
 
-async function insert(
-  db: PgDatabase<PgQueryResultHKT, Record<string, unknown>>,
-) {
-  await db
-    .insert(myTable)
-    .values({ text: faker.location.streetAddress() })
-    .execute();
-}
-
 async function httpTest() {
   const start = performance.now();
 
@@ -44,9 +22,7 @@ async function httpTest() {
     branch: process.env.XATA_BRANCH,
   });
 
-  const db = drizzleHttp(xata);
-
-  await insert(db);
+  await xata.sql`INSERT INTO my_table (text) VALUES (${faker.location.streetAddress()})`;
 
   const end = performance.now();
 
@@ -61,13 +37,15 @@ async function tcpTest() {
     branch: process.env.XATA_BRANCH,
   });
 
-  const client = new pg.Client({ connectionString: xata.sql.connectionString });
+  const client = new pg.native.Client({
+    connectionString: xata.sql.connectionString,
+  });
 
   await client.connect();
 
-  const db = drizzleTcp(client);
-
-  await insert(db);
+  await client.query("INSERT INTO my_table (text) VALUES ($1)", [
+    faker.location.streetAddress(),
+  ]);
 
   await client.end();
 
@@ -88,14 +66,3 @@ for (let i = 0; i < sampleCount; i++) {
     `${(i + 1).toString().padStart(sampleCount.toString().length)}/${sampleCount} HTTP(${sampleMean(httpResults).toFixed(0)}±${sampleStandardDeviation(httpResults).toFixed(0)}) TCP(${sampleMean(tcpResults).toFixed(0)}±${sampleStandardDeviation(tcpResults).toFixed(0)})`,
   );
 }
-
-console.log(
-  "HTTP:",
-  sampleMean(httpResults),
-  sampleStandardDeviation(httpResults),
-);
-console.log(
-  "TCP:",
-  sampleMean(tcpResults),
-  sampleStandardDeviation(tcpResults),
-);
