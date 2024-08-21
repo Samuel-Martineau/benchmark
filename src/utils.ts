@@ -1,4 +1,4 @@
-const data: Record<string, Record<string, number[]>> = {};
+export const data: Record<string, Record<string, number[]>> = {};
 
 export function measure(group: string) {
   data[group] ??= {};

@@ -1,7 +1,7 @@
 import pg from "pg";
 import { XataClient } from "./xata.js";
 import { faker } from "@faker-js/faker";
-import { measure, summarizeResults } from "./utils.js";
+import { data, measure, summarizeResults } from "./utils.js";
 
 const xata = new XataClient({
   apiKey: process.env.XATA_API_KEY,
@@ -11,7 +11,7 @@ const xata = new XataClient({
 async function tcpTest() {
   const m = measure("tcp");
 
-  const client = new pg.native.Client({
+  const client = new pg.Client({
     connectionString: xata.sql.connectionString,
   });
 
@@ -33,13 +33,17 @@ async function httpTest() {
   );
 }
 
-const sampleCount = 100;
-for (let i = 1; i <= sampleCount; i++) {
-  await tcpTest();
-  await httpTest();
-  console.log(
-    "\x1bc",
-    `${i.toString().padStart(sampleCount.toString().length)} / ${sampleCount}\n`,
-    summarizeResults(),
-  );
-}
+await tcpTest();
+
+console.log(data);
+
+// const sampleCount = 1000;
+// for (let i = 1; i <= sampleCount; i++) {
+//   await tcpTest();
+//   await httpTest();
+//   console.log(
+//     "\x1bc",
+//     `${i.toString().padStart(sampleCount.toString().length)} / ${sampleCount}\n`,
+//     summarizeResults(),
+//   );
+// }

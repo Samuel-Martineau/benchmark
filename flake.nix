@@ -20,11 +20,12 @@
               {
                 default = pkgs.mkShell {
                   packages = with pkgs; [
-                    nodejs
-                    nodePackages.pnpm
-                    nodePackages.svelte-language-server
-                    nodePackages.typescript-language-server
+                    nodejs_latest
+                    nodePackages_latest.pnpm
+                    nodePackages_latest.typescript-language-server
                     postgresql
+                    hexyl
+                    unixtools.xxd
                   ];
                 };
               }
