@@ -1,18 +1,4 @@
-export const data: Record<string, Record<string, number[]>> = {};
-
-export function measure(group: string) {
-  data[group] ??= {};
-  return async <T extends () => any>(
-    label: string,
-    func: T,
-  ): Promise<Awaited<ReturnType<T>>> => {
-    const start = performance.now();
-    const toReturn = await func();
-    const end = performance.now();
-    (data[group][label] ??= []).push(end - start);
-    return toReturn;
-  };
-}
+import assert from "node:assert/strict";
 
 function roundToOrder(num: number, order: number) {
   const factor = Math.pow(10, -order);
@@ -32,13 +18,33 @@ function summaryStatistics(datums: number[]) {
   return `${value} ± ${uncertainty}`;
 }
 
-export function summarizeResults() {
-  return JSON.stringify(
-    data,
-    (_, value) => {
-      if (value instanceof Array) return summaryStatistics(value);
-      return value;
-    },
-    2,
+export const nullTerminator = Buffer.alloc(1);
+export const emptyBuffer = Buffer.alloc(0);
+
+export function bufferFromChar(str: string) {
+  assert(str.length === 1);
+  return Buffer.from(str);
+}
+
+export function bufferFromString(str: string) {
+  return Buffer.concat([Buffer.from(str), Buffer.alloc(1)]);
+}
+
+export function bufferFromInt32(int: number) {
+  const buffer = Buffer.alloc(4);
+  buffer.writeInt32BE(int);
+  return buffer;
+}
+
+export function constructMessage(
+  parts: (string | number)[],
+  prefix = emptyBuffer,
+) {
+  const message = Buffer.concat(
+    parts.map((p) =>
+      typeof p === "string" ? bufferFromString(p) : bufferFromInt32(p),
+    ),
   );
+  const length = bufferFromInt32(message.byteLength + 4 + 1);
+  return Buffer.concat([prefix, length, message, nullTerminator]);
 }
